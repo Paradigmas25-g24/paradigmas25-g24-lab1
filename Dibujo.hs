@@ -85,11 +85,33 @@ pureDib a = Basica a
 
 -- map para nuestro lenguaje.
 mapDib :: (a -> b) -> Dibujo a -> Dibujo b
+mapDib f (Basica x) = Basica (f x)
+mapDib f (Rotar45 x) = Rotar45 (mapDib f x)
+mapDib f (Rotar x) = Rotar (mapDib f x)
+mapDib f (Espejar x) = Espejar (mapDib f x)
+mapDib f (Apilar p q x y) = Apilar p q (mapDib f x) (mapDib f y)
+mapDib f (Juntar p q x y) = Juntar p q (mapDib f x) (mapDib f y)
+mapDib f (Encinar x y) = Encinar (mapDib f x) (mapDib f y)
 
+-- Función de fold para Dibujos a
+foldDib :: (a -> b) -- Función para 'Basica'
+        -> (b -> b) -- Función para 'Rotar'
+        -> (b -> b) -- Función para 'Rotar45'
+        -> (b -> b) -- Función para 'Espejar'
+        -> (Float -> Float -> b -> b -> b) -- Función para 'Apilar'
+        -> (Float -> Float -> b -> b -> b) -- Función para 'Juntar'
+        -> (b -> b -> b) -- Función para 'Encinar'
+        -> Dibujo a -- Dibujo a plegar
+        -> b
 
--- Funcion de fold para Dibujos a
-foldDib :: (a -> b) -> (b -> b) -> (b -> b) -> (b -> b) ->
-       (Float -> Float -> b -> b -> b) -> 
-       (Float -> Float -> b -> b -> b) -> 
-       (b -> b -> b) ->
-       Dibujo a -> b
+foldDib fBasica fRotar fRotar45 fEspejar fApilar fJuntar fEncinar dibujo =
+  case dibujo of
+    Basica x -> fBasica x
+    Rotar x -> fRotar (fold x)
+    Rotar45 x -> fRotar45 (fold x)
+    Espejar x -> fEspejar (fold x)
+    Apilar p q x y -> fApilar p q (fold x) (fold y)
+    Juntar p q x y -> fJuntar p q (fold x) (fold y)
+    Encinar x y -> fEncinar (fold x) (fold y)
+  where
+    fold = foldDib fBasica fRotar fRotar45 fEspejar fApilar fJuntar fEncinar-
