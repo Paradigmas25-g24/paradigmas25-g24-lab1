@@ -19,12 +19,12 @@ data Figura = Circulo Radio
 -- Se define el lenguaje via constructores de tipo
 data Dibujo a =  
              Basica a 
-	    | Rotar Dibujo a 
-            | Rotar45 Dibujo a  
-            | Espejar Dibujo a 
-            | Apilar Float Float Dibujo a Dibujo a 
-            | Juntar Float Float Dibujo a Dibujo a
-            | Encimar Dibujo a Dibujo a
+            | Rotar (Dibujo a) 
+            | Rotar45 (Dibujo a)  
+            | Espejar (Dibujo a) 
+            | Apilar Float Float (Dibujo a) (Dibujo a) 
+            | Juntar Float Float (Dibujo a) (Dibujo a)
+            | Encimar (Dibujo a) (Dibujo a)
               deriving (Eq, Show)
 
  
@@ -66,17 +66,17 @@ r270 dibujo = comp r45 6 dibujo
 
 -- Dadas cuatro dibujos las ubica en los cuatro cuadrantes.
 cuarteto :: Dibujo a -> Dibujo a -> Dibujo a -> Dibujo a -> Dibujo a
-cuarteto dibujo1 dibujo2 dibujo3 dibujo4 = (///) ((.-.)(dibujo1 dibujo2) (.-.)(dibujo3 dibujo4))
+cuarteto dibujo1 dibujo2 dibujo3 dibujo4 = (///) ((.-.) dibujo1 dibujo2) ((.-.) dibujo3 dibujo4)
 
 -- Una dibujo repetido con las cuatro rotaciones, superpuestas.
 encimar4 :: Dibujo a -> Dibujo a
-encimar4 dibujo1 =  (^^^)((^^^)(r270(dibujo1) r180(dibujo1)) (^^^)(r90(dibujo1) dibujo1))
+encimar4 dibujo1 =  (^^^) ((^^^) (r270 dibujo1) (r180 dibujo1)) ((^^^) (r90 dibujo1) dibujo1)
 
 
 -- Cuadrado con la misma figura rotada i * 90, para i ∈ {0, ..., 3}.
 -- No confundir con encimar4!
 ciclar :: Dibujo a -> Dibujo a
-ciclar dibujo1 = cuarteto(dibujo1 r90(dibujo1) r180(dibujo1) r270(dibujo1))
+ciclar dibujo1 = cuarteto dibujo1 (r90 dibujo1) (r180 dibujo1) (r270 dibujo1) 
 
 
 -- Transfomar un valor de tipo a como una Basica.
@@ -91,7 +91,7 @@ mapDib f (Rotar x) = Rotar (mapDib f x)
 mapDib f (Espejar x) = Espejar (mapDib f x)
 mapDib f (Apilar p q x y) = Apilar p q (mapDib f x) (mapDib f y)
 mapDib f (Juntar p q x y) = Juntar p q (mapDib f x) (mapDib f y)
-mapDib f (Encinar x y) = Encinar (mapDib f x) (mapDib f y)
+mapDib f (Encimar x y) = Encimar (mapDib f x) (mapDib f y)
 
 -- Función de fold para Dibujos a
 foldDib :: (a -> b) -- Función para 'Basica'
@@ -104,7 +104,7 @@ foldDib :: (a -> b) -- Función para 'Basica'
         -> Dibujo a -- Dibujo a plegar
         -> b
 
-foldDib fBasica fRotar fRotar45 fEspejar fApilar fJuntar fEncinar dibujo =
+foldDib fBasica fRotar fRotar45 fEspejar fApilar fJuntar fEncimar dibujo =
   case dibujo of
     Basica x -> fBasica x
     Rotar x -> fRotar (fold x)
@@ -112,6 +112,6 @@ foldDib fBasica fRotar fRotar45 fEspejar fApilar fJuntar fEncinar dibujo =
     Espejar x -> fEspejar (fold x)
     Apilar p q x y -> fApilar p q (fold x) (fold y)
     Juntar p q x y -> fJuntar p q (fold x) (fold y)
-    Encinar x y -> fEncinar (fold x) (fold y)
+    Encimar x y -> fEncimar (fold x) (fold y)
   where
-    fold = foldDib fBasica fRotar fRotar45 fEspejar fApilar fJuntar fEncinar-
+    fold = foldDib fBasica fRotar fRotar45 fEspejar fApilar fJuntar fEncimar
